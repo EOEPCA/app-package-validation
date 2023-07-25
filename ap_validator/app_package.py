@@ -120,8 +120,8 @@ class AppPackage:
             raise AppPackageValidationException(
                 "The Application Package CWL Workflow class SHALL"
                 f" contain the following elements: {attributes}. "
-                "Missing element{'s' if len(missing_wf_elements)>1"
-                " else ''}: {' '.join(missing_wf_elements)}"
+                f"Missing element{'s' if len(missing_wf_elements)>1 else ''}:"
+                f"{' '.join(missing_wf_elements)}"
             )
 
     def check_req_10(self, entrypoint):
