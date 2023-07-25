@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import requests
 import yaml
+
 from cwl_utils.parser import load_document as load_cwl
 from cwltool.main import main
 from loguru import logger
@@ -138,7 +139,7 @@ class AppPackage:
                         assert getattr(input, attribute, None) is not None
                     except AssertionError:
                         missing_wf_inputs_elements.append(
-                            f"Input '{input.id.split('#')[1]}' element" "'{attribute}' is not set\n"
+                            f"Input '{input.id.split('#')[1]}' element '{attribute}' is not set\n"
                         )
 
             if missing_wf_inputs_elements:
@@ -150,32 +151,23 @@ class AppPackage:
 
     def check_unsupported_cwl(self, entrypoint):
         """checks for unsupported CWL requirements"""
-        clts = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
         detected_wrong_elements = set()
-        for clt in clts:
-            if entrypoint and clt.id.split("#")[1] != entrypoint:
-                continue
-            clt_id = clt.id
-            reqs_n_hints = []
-            if clt.hints:
-                reqs_n_hints = clt.hints
-            if clt.requirements:
-                reqs_n_hints = reqs_n_hints + clt.requirements
-            for req in reqs_n_hints:
-                req_str = str(req)
-                # print(f"req_str {req_str}")
-                if "DockerRequirement" in req_str:
+
+        for clt in [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]:
+
+            for req in clt.hints + clt.requirements:
+
+                if "DockerRequirement" in str(req):
                     dockerOutputDirectory = req.dockerOutputDirectory
-                    # print(f"dockerOutputDirectory {dockerOutputDirectory}")
+
                     if dockerOutputDirectory:
                         detected_wrong_elements.add("dockerOutputDirectory")
                         logger.error(
-                            f"for {clt_id}: Requirement 'dockerOutputDirectory'"
+                            f"for {clt.id}: Requirement 'dockerOutputDirectory'"
                             " is not supported in DockerRequirement."
                         )
 
-        if len(clts) > 0 and len(detected_wrong_elements) > 0:
+        if len(detected_wrong_elements) > 0:
             raise AppPackageValidationException(
-                "Requirement 'dockerOutputDirectory' is not"
-                " supported in DockerRequirement."
+                "Requirement 'dockerOutputDirectory' is not" " supported in DockerRequirement."
             )

@@ -84,9 +84,9 @@ if response_dict["type"] == "submit":
     res, out, err = ap.validate_cwl()
     logger.info(f"res: {res}")
     if res == 0:
-        st.write("CWL is valid")
+        st.info("CWL is valid")
     else:
-        st.code(err)
+        st.error(err)
 
     valid = True
 
@@ -94,35 +94,35 @@ if response_dict["type"] == "submit":
 
     try:
         ap.check_req_7()
-    except AppPackageValidationException:
-        st.markdown(":red[[E] Requirement 7 not satisfied]")
+    except AppPackageValidationException as e:
+        st.error(e)
         valid = False
 
     try:
         ap.check_req_8(entrypoint=entrypoint)
     except AppPackageValidationException as e:
-        st.markdown(f":red[[E] Requirement 8 not satisfied\n{e}]")
+        st.error(e)
         valid = False
 
     try:
         ap.check_req_9(entrypoint=entrypoint)
     except AppPackageValidationException as e:
-        st.markdown(f":red[[E] Requirement 9 not satisfied\n{e}]")
+        st.error(e)
         valid = False
 
     try:
         ap.check_req_10(entrypoint=entrypoint)
     except AppPackageValidationException as e:
-        st.markdown(f":red[[E] Requirement 10 not satisfied\n{e}]")
+        st.error(e)
         valid = False
 
     try:
         ap.check_unsupported_cwl(entrypoint=entrypoint)
-    except AppPackageValidationException:
-        st.markdown(":red[[E] Requirement for unsupported entries not satisfied]")
+    except AppPackageValidationException as e:
+        st.error(e)
         valid = False
 
     if valid:
-        st.write(
+        st.info(
             "CWL is compliant with the OGC's Best Practices for Earth Observation Application Packages"
         )
