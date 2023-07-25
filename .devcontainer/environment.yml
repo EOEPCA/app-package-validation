@@ -1,0 +1,21 @@
+name: env_mamba
+channels:
+  - terradue
+  - conda-forge
+dependencies:
+  - requests
+  - ipykernel
+  - cwltool
+  - click
+  - black
+  - pre-commit
+  - isort
+  - flake8
+  - autoflake
+  - pylint
+  - nose2
+  - streamlit
+  - pip:
+    - streamlit_code_editor
+    - loguru
+ 
