@@ -100,8 +100,8 @@ class AppPackage:
                 "The Application Package CWL CommandLineTool"
                 " class SHALL contain the following nested elements:"
                 " 'hints' / 'DockerRequirement' -> 'dockerPull'. "
-                "Missing element{'s' if len(missing_clt_elements)>1 "
-                "else ''}: {' '.join(missing_clt_elements)}"
+                f"Missing element{'s' if len(missing_clt_elements)>1 else ''}:"
+                f" {' '.join(missing_clt_elements)}"
             )
 
     def check_req_9(self, entrypoint):
@@ -176,5 +176,6 @@ class AppPackage:
 
         if len(clts) > 0 and len(detected_wrong_elements) > 0:
             raise AppPackageValidationException(
-                "Requirement 'dockerOutputDirectory' is not" " supported in DockerRequirement."
+                "Requirement 'dockerOutputDirectory' is not"
+                " supported in DockerRequirement."
             )
