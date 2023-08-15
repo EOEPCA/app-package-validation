@@ -14,10 +14,23 @@ from requests.exceptions import InvalidSchema
 
 
 class AppPackageValidationException(Exception):
-    pass
+    def __init__(self, message, req_text=None):
+        self.message = message
+        self.req_text = req_text
+        super().__init__(self.message)
 
 
 class AppPackage:
+    REQ_7_TEXT = """The Application Package SHALL be a valid CWL document with a "Workflow" class """
+    """and one or more "CommandLineTool" classes."""
+    REQ_8_TEXT = """The Application Package CWL CommandLineTool classes SHALL contain """
+    """the following elements:"""
+    """Identifier ("id"); Command line name ("baseCommand"); """
+    """Input parameters ("inputs"); Environment requirements ("requirements"); """
+    """Docker information ("DockerRequirement")"""
+    REQ_9_TEXT = """The Application Package CWL Workflow class SHALL contain the following elements: """
+    """Identifier ("id"); Title ("label"); Abstract ("doc")"""
+
     def __init__(self, cwl: Dict) -> None:
 
         self.cwl = cwl
@@ -59,70 +72,86 @@ class AppPackage:
     def check_req_7(self):
 
         workflows = [item for item in self.cwl_obj if item.class_ == "Workflow"]
-
-        try:
-            # TODO add check: one or more “CommandLineTool” classes.
-            assert workflows
-        except AssertionError:
+        if not workflows:
             raise AppPackageValidationException(
-                "The Application Package SHALL be a valid CWL document with a Workflow class (...)"
+                message="Workflow class missing", req_text=self.__class__.REQ_7_TEXT
+            )
+
+        command_line_tools = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
+        if not command_line_tools:
+            raise AppPackageValidationException(
+                message="CommandLineTool class missing", req_text=self.__class__.REQ_7_TEXT
             )
 
     def check_req_8(self, entrypoint):
         # checks CLI dockerRequirement
-        clts = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
-        missing_clt_elements = []
-        docker_requirements = ["DockerRequirement"]  # baseCommand, inputs, requirements, id
-        for clt in clts:
-            clt_id = clt.id
-            clt_id_split = clt_id.split("#")[1]
-            if entrypoint and clt_id.split("#")[1] != entrypoint:
-                continue
-            for docker_requirement in docker_requirements:
-                try:
-                    if not any([docker_requirement in str(req) for req in clt.requirements]) and not any(
-                        [docker_requirement in str(req) for req in clt.hints]
-                    ):
-                        missing_clt_elements.append(clt_id)
-                        logger.error(
-                            f"For {clt_id_split}: The Application Package CWL CommandLineTool"
-                            " class SHALL contain the following nested elements:"
-                            " 'hints' / 'DockerRequirement' -> 'dockerPull'"
-                        )
-                except Exception as exc:
-                    missing_clt_elements.append(clt_id_split)
-                    logger.error(
-                        f"{exc} for {clt_id_split}: The Application Package CWL "
-                        " CommandLineTool class SHALL contain the following"
-                        " nested elements: 'hints' / 'DockerRequirement' -> 'dockerPull'"
-                    )
-        if len(clts) > 0 and len(missing_clt_elements) > 0:
+        command_line_tools = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
+        missing_elements = []
+        clt_count = 0
+        for clt in command_line_tools:
+            clt_count += 1
+            if clt.id:
+                clt_parts = clt.id.split("#", 1)
+                clt_id = clt_parts[1] if len(clt_parts) > 1 else clt.id
+            else:
+                clt_id = f"CommandLineTool #{clt_count}"
+                missing_elements.append(f"id ({clt_id})")
+
+            for attribute in ["baseCommand", "inputs", "requirements"]:
+                if getattr(clt, attribute, None) is None:
+                    missing_elements.append(f"{attribute} ({clt_id})")
+
+            requirements = []
+            if clt.requirements:
+                print("REQ {0}: {1}".format(clt_id, type(clt.requirements)))
+                for r in clt.requirements:
+                    print("- REQ {0}: {1}".format(type(r), r.__dir__()))
+                requirements.extend(clt.requirements)
+            if clt.hints:
+                print("HINT {0}: {1}".format(clt_id, type(clt.hints)))
+                for h in clt.hints:
+                    print("- REQ {0}: {1}".format(type(h), h.__dir__()))
+                requirements.extend(clt.hints)
+
+            # clt_id = clt.id
+            # clt_id_split = clt_id.split("#")[1]
+            # if entrypoint and clt_id.split("#")[1] != entrypoint:
+            #    continue
+
+            for r in requirements:
+                print("TYPE: {0}".format(type(r).__name__))
+
+            docker_requirement = next(
+                (r for r in requirements if type(r).__name__.endswith("DockerRequirement")), None
+            )
+            if not docker_requirement or not docker_requirement.dockerPull:
+                missing_elements.append(
+                    "requirements.{0} or hints.{0} ({1})".format("DockerRequirement.dockerPull", clt_id)
+                )
+
+        if missing_elements > 0:
             raise AppPackageValidationException(
-                "The Application Package CWL CommandLineTool"
-                " class SHALL contain the following nested elements:"
-                " 'hints' / 'DockerRequirement' -> 'dockerPull'. "
-                f"Missing element{'s' if len(missing_clt_elements)>1 else ''}:"
-                f" {' '.join(missing_clt_elements)}"
+                "Missing CommandLineTool element{0}: {1}".format(
+                    "" if len(missing_elements) == 1 else "s", ", ".join(missing_elements)
+                ),
+                self.__class__.REQ_8_TEXT,
             )
 
     def check_req_9(self, entrypoint):
         workflows = [item for item in self.cwl_obj if item.class_ == "Workflow"]
         workflow = next((wf for wf in workflows if wf.id.split("#")[1] == entrypoint), None)
 
-        missing_wf_elements = []
-        attributes = ["id", "label", "doc"]
-        for attribute in attributes:
-            try:
-                assert getattr(workflow, attribute, None) is not None
-            except AssertionError:
-                missing_wf_elements.append(attribute)
+        missing_elements = []
+        for attribute in ["id", "label", "doc"]:
+            if getattr(workflow, attribute, None) is None:
+                missing_elements.append(attribute)
 
-        if missing_wf_elements:
+        if missing_elements > 0:
             raise AppPackageValidationException(
-                "The Application Package CWL Workflow class SHALL"
-                f" contain the following elements: {attributes}. "
-                f"Missing element{'s' if len(missing_wf_elements)>1 else ''}:"
-                f"{' '.join(missing_wf_elements)}"
+                "Missing Workflow element{0}: {1}".format(
+                    "" if len(missing_elements) == 1 else "s", ", ".join(missing_elements)
+                ),
+                self.__class__.REQ_9_TEXT,
             )
 
     def check_req_10(self, entrypoint):
@@ -158,6 +187,7 @@ class AppPackage:
             for req in clt.hints + clt.requirements:
 
                 if "DockerRequirement" in str(req):
+
                     dockerOutputDirectory = req.dockerOutputDirectory
 
                     if dockerOutputDirectory:

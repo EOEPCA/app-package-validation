@@ -20,7 +20,7 @@ entrypoint = st.text_input(
 cwl_url = "https://github.com/Terradue/ogc-eo-application-package-hands-on/releases/download/1.1.7/app-water-bodies.1.1.7.cwl"  # noqa: E501,W505
 
 with open(
-    "/workspaces/app-package-validator/demo/resources/custom_buttons_bar_alt.json"
+    "/workspaces/app-package-validation/demo/resources/custom_buttons_bar_alt.json"
 ) as json_button_file_alt:
     custom_buttons_alt = json.load(json_button_file_alt)
 
