@@ -22,7 +22,7 @@ class AppPackageValidationException(Exception):
 
 class AppPackage:
     REQ_7_TEXT = """The Application Package SHALL be a valid CWL document with a "Workflow" class """
-    """and one or more "CommandLineTool" classes."""
+    """and one or more "CommandLineTool" classes"""
     REQ_8_TEXT = """The Application Package CWL CommandLineTool classes SHALL contain """
     """the following elements:"""
     """Identifier ("id"); Command line name ("baseCommand"); """
@@ -30,17 +30,31 @@ class AppPackage:
     """Docker information ("DockerRequirement")"""
     REQ_9_TEXT = """The Application Package CWL Workflow class SHALL contain the following elements: """
     """Identifier ("id"); Title ("label"); Abstract ("doc")"""
+    REQ_10_TEXT = """The Application Package CWL Workflow class “inputs” fields SHALL contain """
+    """the following elements: Identifier ("id"); Title ("label"); Abstract ("doc")"""
+    REQ_11_TEXT = """The Application Package CWL Workclass classes SHALL include additional metadata """
+    """as defined in Table 1 ("author", "citation", "codeRepository", "contributor", """
+    """"dateCreated", "keywords", "license", "releaseNotes", "version")"""
 
-    def __init__(self, cwl: Dict) -> None:
+    def __init__(self, cwl: Dict, entry_point=None) -> None:
 
         self.cwl = cwl
         self.cwl_obj = load_cwl(cwl, load_all=True)
 
+        self.workflows = [item for item in self.cwl_obj if item.class_ == "Workflow"]
+        if entry_point:
+            self.workflow = next(
+                (wf for wf in self.workflows if wf.id.split("#", 1)[-1] == entry_point), None
+            )
+        else:
+            self.workflow = None
+        self.command_line_tools = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
+
     @classmethod
-    def from_string(cls, cwl_str):
+    def from_string(cls, cwl_str, entry_point=None):
         cwl_obj = yaml.safe_load(cwl_str)
 
-        return cls(cwl=cwl_obj)
+        return cls(cwl=cwl_obj, entry_point=entry_point)
 
     @classmethod
     def from_url(cls, url):
@@ -54,7 +68,6 @@ class AppPackage:
         return cls(cwl=cwl_content)
 
     def validate_cwl(self):
-
         temp_dir = tempfile.mkdtemp()
         with open(os.path.join(temp_dir, "temp_cwl"), "w") as outfile:
             yaml.dump(self.cwl, outfile, default_flow_style=False)
@@ -70,115 +83,189 @@ class AppPackage:
         return res, out.getvalue(), err.getvalue()
 
     def check_req_7(self):
+        issues = []
 
-        workflows = [item for item in self.cwl_obj if item.class_ == "Workflow"]
-        if not workflows:
-            raise AppPackageValidationException(
-                message="Workflow class missing", req_text=self.__class__.REQ_7_TEXT
+        if not self.workflows:
+            issues.append({"type": "error", "message": "No Workflow class defined", "req": "req-8"})
+
+        if not self.command_line_tools:
+            issues.append(
+                {"type": "error", "message": "No CommandLineTool class defined", "req": "req-8"}
             )
 
-        command_line_tools = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
-        if not command_line_tools:
-            raise AppPackageValidationException(
-                message="CommandLineTool class missing", req_text=self.__class__.REQ_7_TEXT
-            )
+        return issues
 
-    def check_req_8(self, entrypoint):
+    def check_req_8(self):
         # checks CLI dockerRequirement
-        command_line_tools = [item for item in self.cwl_obj if item.class_ == "CommandLineTool"]
-        missing_elements = []
+        issues = []
         clt_count = 0
-        for clt in command_line_tools:
+        for clt in self.command_line_tools:
             clt_count += 1
             if clt.id:
-                clt_parts = clt.id.split("#", 1)
-                clt_id = clt_parts[1] if len(clt_parts) > 1 else clt.id
+                clt_id = clt.id.split("#", 1)[-1]
+                clt_name = f"CommandLineTool '{clt_id}'"
             else:
-                clt_id = f"CommandLineTool #{clt_count}"
-                missing_elements.append(f"id ({clt_id})")
+                clt_name = f"CommandLineTool #{clt_count}"
+                issues.append(
+                    {"type": "error", "message": f"Missing element for {clt_name}: id", "req": "req-8"}
+                )
 
             for attribute in ["baseCommand", "inputs", "requirements"]:
                 if getattr(clt, attribute, None) is None:
-                    missing_elements.append(f"{attribute} ({clt_id})")
+                    issues.append(
+                        {
+                            "type": "error",
+                            "message": f"Missing element for {clt_name}: {attribute}",
+                            "req": "req-8",
+                        }
+                    )
 
             requirements = []
             if clt.requirements:
-                print("REQ {0}: {1}".format(clt_id, type(clt.requirements)))
-                for r in clt.requirements:
-                    print("- REQ {0}: {1}".format(type(r), r.__dir__()))
                 requirements.extend(clt.requirements)
             if clt.hints:
-                print("HINT {0}: {1}".format(clt_id, type(clt.hints)))
-                for h in clt.hints:
-                    print("- REQ {0}: {1}".format(type(h), h.__dir__()))
                 requirements.extend(clt.hints)
-
-            # clt_id = clt.id
-            # clt_id_split = clt_id.split("#")[1]
-            # if entrypoint and clt_id.split("#")[1] != entrypoint:
-            #    continue
-
-            for r in requirements:
-                print("TYPE: {0}".format(type(r).__name__))
 
             docker_requirement = next(
                 (r for r in requirements if type(r).__name__.endswith("DockerRequirement")), None
             )
             if not docker_requirement or not docker_requirement.dockerPull:
-                missing_elements.append(
-                    "requirements.{0} or hints.{0} ({1})".format("DockerRequirement.dockerPull", clt_id)
+                issues.append(
+                    {
+                        "type": "error",
+                        "message": f"Missing element for {clt_name}: "
+                        "requirements.DockerRequirement.dockerPull or "
+                        "hints.DockerRequirement.dockerPull",
+                        "req": "req-8",
+                    }
                 )
 
-        if missing_elements > 0:
-            raise AppPackageValidationException(
-                "Missing CommandLineTool element{0}: {1}".format(
-                    "" if len(missing_elements) == 1 else "s", ", ".join(missing_elements)
-                ),
-                self.__class__.REQ_8_TEXT,
-            )
+        return issues
 
-    def check_req_9(self, entrypoint):
-        workflows = [item for item in self.cwl_obj if item.class_ == "Workflow"]
-        workflow = next((wf for wf in workflows if wf.id.split("#")[1] == entrypoint), None)
+    def check_req_9(self):
+        issues = []
 
-        missing_elements = []
-        for attribute in ["id", "label", "doc"]:
-            if getattr(workflow, attribute, None) is None:
-                missing_elements.append(attribute)
+        workflows = [self.workflow] if self.workflow else self.workflows
 
-        if missing_elements > 0:
-            raise AppPackageValidationException(
-                "Missing Workflow element{0}: {1}".format(
-                    "" if len(missing_elements) == 1 else "s", ", ".join(missing_elements)
-                ),
-                self.__class__.REQ_9_TEXT,
-            )
+        wf_count = 0
+        for workflow in workflows:
+            wf_count += 1
+            if workflow.id:
+                wf_id = workflow.id.split("#", 1)[-1]
+                wf_name = f"Workflow '{wf_id}'"
+            else:
+                wf_name = f"Workflow #{wf_count}"
+                issues.append(
+                    {"type": "error", "message": f"Missing element for {wf_name}: id", "req": "req-9"}
+                )
+            for attribute in ["label", "doc"]:
+                if getattr(workflow, attribute, None) is None:
+                    issues.append(
+                        {
+                            "type": "error",
+                            "message": f"Missing element for {wf_name}: {attribute}",
+                            "req": "req-9",
+                        }
+                    )
 
-    def check_req_10(self, entrypoint):
-        # https://docs.ogc.org/bp/20-089r1.html#toc37
-        workflows = [item for item in self.cwl_obj if item.class_ == "Workflow"]
+        return issues
 
-        workflow = next((wf for wf in workflows if wf.id.split("#")[1] == entrypoint), None)
-        if workflow:
-            missing_wf_inputs_elements = []
-            attributes = ["label", "doc"]
+    def check_req_10(self):
+        issues = []
+
+        workflows = [self.workflow] if self.workflow else self.workflows
+
+        wf_count = 0
+        for workflow in workflows:
+            wf_count += 1
+            if workflow.id:
+                wf_id = workflow.id.split("#", 1)[-1]
+                wf_name = f"Workflow '{wf_id}'"
+            else:
+                wf_name = f"Workflow #{wf_count}"
+
+            input_count = 0
             for input in workflow.inputs:
-                for attribute in attributes:
-                    try:
-                        assert getattr(input, attribute, None) is not None
-                    except AssertionError:
-                        missing_wf_inputs_elements.append(
-                            f"Input '{input.id.split('#')[1]}' element '{attribute}' is not set\n"
+                input_count += 1
+                if input.id:
+                    input_name = f"input '{input.id}'"
+                else:
+                    wf_name = f"input #{input_count}"
+                    issues.append(
+                        {
+                            "type": "error",
+                            "message": f"Missing element for {input_name} of {wf_name}': id",
+                            "req": "req-10",
+                        }
+                    )
+
+                for attribute in ["label", "doc"]:
+                    if getattr(input, attribute, None) is None:
+                        issues.append(
+                            {
+                                "type": "error",
+                                "message": f"Missing element for {input_name} of {wf_name}':"
+                                f"{attribute}",
+                                "req": "req-10",
+                            }
                         )
+        return issues
 
-            if missing_wf_inputs_elements:
-                raise AppPackageValidationException(
-                    "The Application Package CWL Workflow class "
-                    "inputs fields SHALL contain the following "
-                    f"elements: {attributes}.\n  {'; '.join(missing_wf_inputs_elements)}"
-                )
+    def check_req_11(self):
+        issues = []
 
-    def check_unsupported_cwl(self, entrypoint):
+        workflows = [self.workflow] if self.workflow else self.workflows
+
+        wf_count = 0
+        for workflow in workflows:
+            wf_count += 1
+            if workflow.id:
+                wf_id = workflow.id.split("#", 1)[-1]
+                wf_name = f"Workflow '{wf_id}'"
+            else:
+                wf_name = f"Workflow #{wf_count}"
+
+            for attribute in ["version"]:
+                if getattr(workflow, attribute, None) is None:
+                    issues.append(
+                        {
+                            "type": "error",
+                            "message": f"Missing element for {wf_name}: {attribute}",
+                            "req": "req-11",
+                        }
+                    )
+
+            for attribute in [
+                "author",
+                "citation",
+                "codeRepository",
+                "contributor",
+                "dateCreated",
+                "keywords",
+                "license",
+                "releaseNotes",
+            ]:
+                if getattr(workflow, attribute, None) is None:
+                    issues.append(
+                        {
+                            "type": "hint",
+                            "message": f"Missing optional element for {wf_name}: {attribute}",
+                            "req": "req-11",
+                        }
+                    )
+
+        return issues
+
+    def check_req_12(self):
+        return []
+
+    def check_req_13(self):
+        return []
+
+    def check_req_14(self):
+        return []
+
+    def check_unsupported_cwl(self):
         """checks for unsupported CWL requirements"""
         detected_wrong_elements = set()
 

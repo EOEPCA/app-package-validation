@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import requests
 import streamlit as st
 import yaml
-from ap_validator.app_package import AppPackage, AppPackageValidationException
+from ap_validator.app_package import AppPackage
 from code_editor import code_editor
 from cwl_utils.parser import load_document as load_cwl
 from loguru import logger
@@ -78,7 +78,7 @@ logger.info(response_dict["type"])
 if response_dict["type"] == "submit":
     cwl_content = response_dict["text"]
 
-    ap = AppPackage.from_string(cwl_content)
+    ap = AppPackage.from_string(cwl_content, entry_point=entrypoint)
     logger.info(response_dict.keys())
 
     res, out, err = ap.validate_cwl()
@@ -92,35 +92,26 @@ if response_dict["type"] == "submit":
 
     cwl_obj = load_cwl(yaml.safe_load(cwl_content), load_all=True)
 
-    try:
-        ap.check_req_7()
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
+    checks = [
+        ap.check_req_7,
+        ap.check_req_8,
+        ap.check_req_9,
+        ap.check_req_10,
+        ap.check_req_11,
+        ap.check_req_12,
+        ap.check_req_13,
+        ap.check_req_14,
+        ap.check_unsupported_cwl,
+    ]
 
-    try:
-        ap.check_req_8(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
-
-    try:
-        ap.check_req_9(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
-
-    try:
-        ap.check_req_10(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
-
-    try:
-        ap.check_unsupported_cwl(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
+    for check in checks:
+        issues = check()
+        for issue in issues:
+            if issue["type"] == "error":
+                st.error(issue["message"])
+                valid = False
+            else:
+                st.info(issue["message"])
 
     if valid:
         st.info(
