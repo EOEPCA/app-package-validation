@@ -581,7 +581,7 @@ class AppPackage:
                         "type": "hint",
                         "message": f"No output of type 'Directory' for {clt_name}; make sure "
                         "CommandLineTool outputs that need to be staged are of type 'Directory'",
-                        "req": "req-12",
+                        "req": "req-14",
                     }
                 )
 
