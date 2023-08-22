@@ -73,9 +73,10 @@ Options:
   * 2 if there is a more fundamental problem with the CWL file.
 
 
-## Use the library
+## Using the library
 
 Install the library with pip (from PyPI):
+
 ```pip install ogc_ap_validator```
 
 Write a quick program using the library (make sure you have the [test CWL file](tests/data/req_8_no_clt_basecommand.cwl) at the correct location):
