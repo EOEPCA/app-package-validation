@@ -95,7 +95,7 @@ The method `AppPackage.check_all()` returns a dictionary with three entries:
 
 * `valid`: a bool telling the overall validation result, i.e. whether the CWL file is compliant with the OGC application package best practices,
 * `issues`: a list of issues (each a dictionary with `type`, `message` and `req` entries). Only issues that match the type in the method's `include` argument are listed (the types are: `error`, `hint` and `note`). The `req` value refers to an OGC requirement (if there is no explicit requirement, the value is `None`), see next point,
-* `req`: a dictionary where the values are the specifications of all relevant OGC requirements.
+* `requirements`: a dictionary where the values are the specifications of all relevant OGC requirements.
 
 Run the program like this:
 ```
