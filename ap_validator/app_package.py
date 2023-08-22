@@ -123,14 +123,13 @@ class AppPackage:
         if detail in ["all"]:
             include.append("note")
 
-        valid, issues = ap.check_all(include)
+        result = ap.check_all(include)
+        issues = result["issues"]
+        valid = result["valid"]
 
         if format == "text":
             for issue in issues:
-                if issue["type"] == "error":
-                    valid = False
-                if issue["type"] in include:
-                    print("{0}: {1}".format(issue["type"].upper(), issue["message"]), file=stdout)
+                print("{0}: {1}".format(issue["type"].upper(), issue["message"]), file=stdout)
             if valid:
                 print(
                     "CWL is compliant with the OGC's Best Practices for Earth Observation "
@@ -145,13 +144,6 @@ class AppPackage:
                 )
 
         elif format == "json":
-            result = {
-                "issues": issues,
-                "requirements": {
-                    r: AppPackage.requirement_specs[r]
-                    for r in set([i["req"] for i in issues if i["req"]])
-                },
-            }
             print(json.dumps(result, indent=2), file=stdout)
 
         return 0 if valid else 1
@@ -233,6 +225,7 @@ class AppPackage:
         ----------
         include : list[str]
             A list of detail levels to be included in the output
+            (possible values: 'error', 'hint', 'note')
 
         Returns
         -------
@@ -243,7 +236,6 @@ class AppPackage:
         issues = []
 
         res, out, err = self.validate_cwl()
-        # res = 0
         if res == 0:
             checks = [
                 self.check_req_7,
@@ -269,7 +261,13 @@ class AppPackage:
                     {"type": "error", "message": f"CWL is invalid; error message:\n{out}", "req": None}
                 )
 
-        return valid, issues
+        return {
+            "valid": valid,
+            "issues": issues,
+            "requirements": {
+                r: AppPackage.requirement_specs[r] for r in set([i["req"] for i in issues if i["req"]])
+            },
+        }
 
     def check_req_7(self):
         """Checks the CWL file against OGC requirement 7 (minimum root elements).

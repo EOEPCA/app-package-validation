@@ -88,30 +88,18 @@ if response_dict["type"] == "submit":
     else:
         st.error(err)
 
-    valid = True
-
     cwl_obj = load_cwl(yaml.safe_load(cwl_content), load_all=True)
 
-    checks = [
-        ap.check_req_7,
-        ap.check_req_8,
-        ap.check_req_9,
-        ap.check_req_10,
-        ap.check_req_11,
-        ap.check_req_12,
-        ap.check_req_13,
-        ap.check_req_14,
-        ap.check_unsupported_cwl,
-    ]
+    result = ap.check_all(["error", "hint", "note"])
+    valid = result["valid"]
+    issues = result["issues"]
 
-    for check in checks:
-        issues = check()
-        for issue in issues:
-            if issue["type"] == "error":
-                st.error(issue["message"])
-                valid = False
-            else:
-                st.info(issue["message"])
+    for issue in issues:
+        if issue["type"] == "error":
+            st.error("ERROR: {0}".format(issue["message"]))
+            valid = False
+        else:
+            st.info("{0}: {1}".format(issue["type"].upper(), issue["message"]))
 
     if valid:
         st.info(

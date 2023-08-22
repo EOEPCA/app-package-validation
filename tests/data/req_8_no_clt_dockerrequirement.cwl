@@ -13,8 +13,6 @@ $graph:
       - class: ScatterFeatureRequirement
       - class: SubworkflowFeatureRequirement
     inputs:
-      dir_test:
-        type: Directory
       aoi:
         label: area of interest
         doc: area of interest as a bounding box
@@ -121,9 +119,6 @@ $graph:
       ResourceRequirement:
         coresMax: 2
         ramMax: 2028
-    hints:
-      DockerRequirement:
-        dockerPull: ghcr.io/terradue/ogc-eo-application-package-hands-on/crop:1.1.7
     baseCommand: ["python", "-m", "app"]
     arguments: []
     inputs:
