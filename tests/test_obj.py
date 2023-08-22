@@ -1,6 +1,6 @@
 import unittest
 
-from ap_validator.app_package import AppPackage, AppPackageValidationException
+from ap_validator.app_package import AppPackage
 from loguru import logger
 
 
@@ -51,9 +51,9 @@ $graph:
 
         cls.cwl_remote_url = "https://github.com/Terradue/ogc-eo-application-package-hands-on/releases/download/1.1.7/app-water-bodies.1.1.7.cwl"  # noqa: E501,W505
         cls.cwl_local_url = (
-            "file:///workspaces/app-package-validator/water_bodies.1.1.6.cwl"  # noqa: E501,W505
+            "file:///workspaces/app-package-validation/water_bodies.1.1.6.cwl"  # noqa: E501,W505
         )
-        cls.cwl_unsupported_url = "file:///workspaces/app-package-validator/tests/data/test_deny_unsupported.cwl"  # noqa: E501,W505
+        cls.cwl_unsupported_url = "file:///workspaces/app-package-validation/tests/data/test_deny_unsupported.cwl"  # noqa: E501,W505
 
     def test_from_str(self):
         ap = AppPackage.from_string(cwl_str=TestCalrissianContext.cwl_str)
@@ -79,38 +79,3 @@ $graph:
 
         logger.info(f"validate_cwl out:{out}")
         self.assertEqual(res, 0)
-
-    def test_req_7(self):
-        ap = AppPackage.from_url(url=self.cwl_remote_url)
-        ap.check_req_7()
-
-    def test_req_8_single(self):
-        ap = AppPackage.from_url(url=self.cwl_remote_url)
-        ap.check_req_8(entrypoint="crop")
-
-    def test_req_8_all(self):
-        ap = AppPackage.from_url(url=self.cwl_remote_url)
-        ap.check_req_8(entrypoint=None)
-
-    def test_req_9_single(self):
-        ap = AppPackage.from_url(url=self.cwl_remote_url)
-        ap.check_req_9(entrypoint="water_bodies")
-
-    def test_req_10_single(self):
-        ap = AppPackage.from_url(url=self.cwl_local_url)
-        ap.check_req_10("water_bodies")  # detect_water_body
-
-    def test_deny_unsupported(self):
-        ap = AppPackage.from_url(url=self.cwl_remote_url)
-        ap.check_unsupported_cwl(entrypoint=None)
-
-    def test_deny_unsupported_must_fail(self):
-        return_val = False
-        try:
-            ap = AppPackage.from_url(url=self.cwl_unsupported_url)
-            ap.check_unsupported_cwl(entrypoint=None)
-
-        except AppPackageValidationException:
-            return_val = True  # must fail
-
-        assert return_val

@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import requests
 import streamlit as st
 import yaml
-from ap_validator.app_package import AppPackage, AppPackageValidationException
+from ap_validator.app_package import AppPackage
 from code_editor import code_editor
 from cwl_utils.parser import load_document as load_cwl
 from loguru import logger
@@ -20,7 +20,7 @@ entrypoint = st.text_input(
 cwl_url = "https://github.com/Terradue/ogc-eo-application-package-hands-on/releases/download/1.1.7/app-water-bodies.1.1.7.cwl"  # noqa: E501,W505
 
 with open(
-    "/workspaces/app-package-validator/demo/resources/custom_buttons_bar_alt.json"
+    "/workspaces/app-package-validation/demo/resources/custom_buttons_bar_alt.json"
 ) as json_button_file_alt:
     custom_buttons_alt = json.load(json_button_file_alt)
 
@@ -78,7 +78,7 @@ logger.info(response_dict["type"])
 if response_dict["type"] == "submit":
     cwl_content = response_dict["text"]
 
-    ap = AppPackage.from_string(cwl_content)
+    ap = AppPackage.from_string(cwl_content, entry_point=entrypoint)
     logger.info(response_dict.keys())
 
     res, out, err = ap.validate_cwl()
@@ -88,39 +88,18 @@ if response_dict["type"] == "submit":
     else:
         st.error(err)
 
-    valid = True
-
     cwl_obj = load_cwl(yaml.safe_load(cwl_content), load_all=True)
 
-    try:
-        ap.check_req_7()
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
+    result = ap.check_all(["error", "hint", "note"])
+    valid = result["valid"]
+    issues = result["issues"]
 
-    try:
-        ap.check_req_8(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
-
-    try:
-        ap.check_req_9(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
-
-    try:
-        ap.check_req_10(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
-
-    try:
-        ap.check_unsupported_cwl(entrypoint=entrypoint)
-    except AppPackageValidationException as e:
-        st.error(e)
-        valid = False
+    for issue in issues:
+        if issue["type"] == "error":
+            st.error("ERROR: {0}".format(issue["message"]))
+            valid = False
+        else:
+            st.info("{0}: {1}".format(issue["type"].upper(), issue["message"]))
 
     if valid:
         st.info(
