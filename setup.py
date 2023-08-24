@@ -12,4 +12,9 @@ setup(
         "loguru",
     ],
     scripts=["bin/ap-validator"],
+    project_urls={
+        "Documentation": "https://github.com/EOEPCA/app-package-validation/blob/main/README.md",
+        "Source": "https://github.com/EOEPCA/app-package-validation/",
+        "Tracker": "https://github.com/EOEPCA/app-package-validation/issues",
+    },
 )
