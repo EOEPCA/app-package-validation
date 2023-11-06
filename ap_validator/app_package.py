@@ -504,8 +504,8 @@ class AppPackage:
             else:
                 clt_name = f"CommandLineTool #{clt_count}"
 
-            has_directory = bool([i for i in clt.inputs if i.type == "Directory"])
-            has_directory_arr = bool([i for i in clt.inputs if "InputArraySchema" in str(i.type) and i.type.items == "Directory"])          
+            has_directory = bool([i for i in clt.inputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in clt.inputs if "InputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
             if not has_directory and not has_directory_arr:
                 issues.append(
                     {
@@ -541,8 +541,8 @@ class AppPackage:
             else:
                 wf_name = f"Workflow #{wf_count}"
 
-            has_directory = bool([i for i in workflow.inputs if i.type == "Directory"])
-            has_directory_arr = bool([i for i in workflow.inputs if "InputArraySchema" in str(i.type) and i.type.items == "Directory"])          
+            has_directory = bool([i for i in workflow.inputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in workflow.inputs if "InputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
             if not has_directory and not has_directory_arr:
                 issues.append(
                     {
@@ -576,8 +576,8 @@ class AppPackage:
             else:
                 clt_name = f"CommandLineTool #{clt_count}"
 
-            has_directory = bool([i for i in clt.outputs if i.type == "Directory"])
-            has_directory_arr = bool([i for i in clt.outputs if "OutputArraySchema" in str(i.type) and i.type.items == "Directory"])          
+            has_directory = bool([i for i in clt.outputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in clt.outputs if "OutputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
             if not has_directory and not has_directory_arr:
                 issues.append(
                     {
@@ -599,8 +599,8 @@ class AppPackage:
             else:
                 wf_name = f"Workflow #{wf_count}"
 
-            has_directory = bool([i for i in workflow.outputs if i.type == "Directory"])
-            has_directory_arr = bool([i for i in workflow.outputs if "OutputArraySchema" in str(i.type) and i.type.items == "Directory"])          
+            has_directory = bool([i for i in workflow.outputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in workflow.outputs if "OutputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
             if not has_directory and not has_directory_arr:
                 issues.append(
                     {

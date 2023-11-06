@@ -1,3 +1,4 @@
+import os
 import unittest
 import json
 from io import StringIO
@@ -10,7 +11,10 @@ class TestCommandLineInterface(unittest.TestCase):
         pass
 
     def validate_cwl_file(self, cwl_url, entry_point=None, detail="errors", format="json"):
-        if "/" not in cwl_url:
+        if  not os.getcwd().startswith("/workspaces"):
+            cwl_url = "tests/data/{0}".format(cwl_url)
+            print(f"cwl_url {cwl_url}")
+        elif "/" not in cwl_url:
             cwl_url = "/workspaces/app-package-validation/tests/data/{0}".format(cwl_url)
         out = StringIO()
         err = StringIO()
@@ -150,7 +154,7 @@ class TestCommandLineInterface(unittest.TestCase):
                     1
                     for i in out["issues"]
                     if i["type"] == "hint"
-                    and i["message"].startswith("No input of type 'Directory' for ")
+                    and i["message"].startswith("No input of type 'Directory'/'Directory[]' for ")
                 ]
             ),
             6,
@@ -165,7 +169,7 @@ class TestCommandLineInterface(unittest.TestCase):
                     1
                     for i in out["issues"]
                     if i["type"] == "hint"
-                    and i["message"].startswith("No input of type 'Directory' for ")
+                    and i["message"].startswith("No input of type 'Directory'/'Directory[]' for ")
                 ]
             ),
             3,
@@ -180,7 +184,7 @@ class TestCommandLineInterface(unittest.TestCase):
                     1
                     for i in out["issues"]
                     if i["type"] == "hint"
-                    and i["message"].startswith("No output of type 'Directory' for ")
+                    and i["message"].startswith("No output of type 'Directory'/'Directory[]' for ")
                 ]
             ),
             6,
@@ -195,7 +199,7 @@ class TestCommandLineInterface(unittest.TestCase):
                     1
                     for i in out["issues"]
                     if i["type"] == "hint"
-                    and i["message"].startswith("No output of type 'Directory' for ")
+                    and i["message"].startswith("No output of type 'Directory'/'Directory[]' for ")
                 ]
             ),
             4,
