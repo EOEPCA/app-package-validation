@@ -115,42 +115,42 @@ CONTENT: {
     },
     {
       "type": "hint",
-      "message": "No input of type 'Directory' for CommandLineTool 'crop'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
+      "message": "No input of type 'Directory'/'Directory[]' for CommandLineTool 'crop'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
       "req": "req-12"
     },
     {
       "type": "hint",
-      "message": "No input of type 'Directory' for CommandLineTool 'norm_diff'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
+      "message": "No input of type 'Directory'/'Directory[]' for CommandLineTool 'norm_diff'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
       "req": "req-12"
     },
     {
       "type": "hint",
-      "message": "No input of type 'Directory' for CommandLineTool 'otsu'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
+      "message": "No input of type 'Directory'/'Directory[]' for CommandLineTool 'otsu'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
       "req": "req-12"
     },
     {
       "type": "hint",
-      "message": "No input of type 'Directory' for CommandLineTool 'stac'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
+      "message": "No input of type 'Directory'/'Directory[]' for CommandLineTool 'stac'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
       "req": "req-12"
     },
     {
       "type": "hint",
-      "message": "No input of type 'Directory' for Workflow 'water_bodies'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
+      "message": "No input of type 'Directory'/'Directory[]' for Workflow 'water_bodies'; make sure inputs referencing GeoJSON features of EO products that need to be staged in are of type 'Directory'",
       "req": "req-13"
     },
     {
       "type": "hint",
-      "message": "No output of type 'Directory' for CommandLineTool 'crop'; make sure CommandLineTool outputs that need to be staged are of type 'Directory'",
+      "message": "No output of type 'Directory'/'Directory[]' for CommandLineTool 'crop'; make sure CommandLineTool outputs that need to be staged are of type 'Directory'",
       "req": "req-14"
     },
     {
       "type": "hint",
-      "message": "No output of type 'Directory' for CommandLineTool 'norm_diff'; make sure CommandLineTool outputs that need to be staged are of type 'Directory'",
+      "message": "No output of type 'Directory'/'Directory[]' for CommandLineTool 'norm_diff'; make sure CommandLineTool outputs that need to be staged are of type 'Directory'",
       "req": "req-14"
     },
     {
       "type": "hint",
-      "message": "No output of type 'Directory' for CommandLineTool 'otsu'; make sure CommandLineTool outputs that need to be staged are of type 'Directory'",
+      "message": "No output of type 'Directory'/'Directory[]' for CommandLineTool 'otsu'; make sure CommandLineTool outputs that need to be staged are of type 'Directory'",
       "req": "req-14"
     }
   ],

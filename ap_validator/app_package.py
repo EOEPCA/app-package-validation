@@ -504,12 +504,13 @@ class AppPackage:
             else:
                 clt_name = f"CommandLineTool #{clt_count}"
 
-            has_directory = bool([i for i in clt.inputs if i.type == "Directory"])
-            if not has_directory:
+            has_directory = bool([i for i in clt.inputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in clt.inputs if "InputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
+            if not has_directory and not has_directory_arr:
                 issues.append(
                     {
                         "type": "hint",
-                        "message": f"No input of type 'Directory' for {clt_name}; make sure inputs "
+                        "message": f"No input of type 'Directory'/'Directory[]' for {clt_name}; make sure inputs "
                         "referencing GeoJSON features of EO products that need to be staged in "
                         "are of type 'Directory'",
                         "req": "req-12",
@@ -540,12 +541,13 @@ class AppPackage:
             else:
                 wf_name = f"Workflow #{wf_count}"
 
-            has_directory = bool([i for i in workflow.inputs if i.type == "Directory"])
-            if not has_directory:
+            has_directory = bool([i for i in workflow.inputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in workflow.inputs if "InputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
+            if not has_directory and not has_directory_arr:
                 issues.append(
                     {
                         "type": "hint",
-                        "message": f"No input of type 'Directory' for {wf_name}; make sure inputs "
+                        "message": f"No input of type 'Directory'/'Directory[]' for {wf_name}; make sure inputs "
                         "referencing GeoJSON features of EO products that need to be staged in "
                         "are of type 'Directory'",
                         "req": "req-13",
@@ -574,12 +576,13 @@ class AppPackage:
             else:
                 clt_name = f"CommandLineTool #{clt_count}"
 
-            has_directory = bool([i for i in clt.outputs if i.type == "Directory"])
-            if not has_directory:
+            has_directory = bool([i for i in clt.outputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in clt.outputs if "OutputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
+            if not has_directory and not has_directory_arr:
                 issues.append(
                     {
                         "type": "hint",
-                        "message": f"No output of type 'Directory' for {clt_name}; make sure "
+                        "message": f"No output of type 'Directory'/'Directory[]' for {clt_name}; make sure "
                         "CommandLineTool outputs that need to be staged are of type 'Directory'",
                         "req": "req-14",
                     }
@@ -596,12 +599,13 @@ class AppPackage:
             else:
                 wf_name = f"Workflow #{wf_count}"
 
-            has_directory = bool([i for i in workflow.outputs if i.type == "Directory"])
-            if not has_directory:
+            has_directory = bool([i for i in workflow.outputs if i.type_ == "Directory"])
+            has_directory_arr = bool([i for i in workflow.outputs if "OutputArraySchema" in str(i.type_) and i.type_.items == "Directory"])          
+            if not has_directory and not has_directory_arr:
                 issues.append(
                     {
                         "type": "hint",
-                        "message": f"No output of type 'Directory' for {wf_name}; make sure "
+                        "message": f"No output of type 'Directory'/'Directory[]' for {wf_name}; make sure "
                         "Workflow outputs that need to be staged out are of type 'Directory'",
                         "req": "req-14",
                     }
