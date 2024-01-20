@@ -10,6 +10,7 @@ setup(
         "cwltool",
         "click",
         "loguru",
+        "pyyaml",
     ],
     scripts=["bin/ap-validator"],
     project_urls={

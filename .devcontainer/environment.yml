@@ -18,4 +18,5 @@ dependencies:
   - pip:
     - streamlit_code_editor
     - loguru
+    - pyyaml
  
